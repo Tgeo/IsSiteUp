@@ -26,8 +26,17 @@ namespace IsSiteUp
             {
                 using (var response = await httpClient.GetAsync(_url))
                 {
-                    if (!response.IsSuccessStatusCode)
-                        await sendEmailAsync(response.StatusCode, log);
+                    if (response.IsSuccessStatusCode)
+                        return;
+
+                    // Try a second time if the first time fails.
+                    // Implemented to prevent one-off transport level errors
+                    // from filling up my inbox :).
+                    using (var secondResponse = await httpClient.GetAsync(_url))
+                    {
+                        if (!secondResponse.IsSuccessStatusCode)
+                            await sendEmailAsync(response.StatusCode, log);
+                    }
                 }
             }
         }
